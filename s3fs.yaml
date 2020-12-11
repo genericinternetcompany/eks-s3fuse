@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s3fs
+  labels:
+    app: s3fs
+spec:
+  selector:
+    matchLabels:
+      app: s3fs
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: s3fs
+        tier: storage
+    spec:
+      containers:
+      - name: s3fs
+        image: michaeldigiacomi/s3fs-test
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        env:
+          - name: DUMB_INIT_VER
+            value: 1.2.0
+          - name: S3_BUCKET
+            value: <Bucket Name>
+          - name: S3_REGION
+            value: us-east-1
+          - name: MNT_POINT
+            value: /data
+          - name: AWS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: s3fs-secret
+                key: aws-key
+          - name: AWS_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: s3fs-secret
+                key: aws-secret-key
+        volumeMounts:
+        - name: devfuse
+          mountPath: /dev/fuse
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: devfuse
+        hostPath:
+          path: /dev/fuse
